@@ -7,16 +7,28 @@ use Countable;
 use IteratorAggregate;
 use DateTimeImmutable;
 use DateTimeInterface;
+use DateTime;
+use DateTimeZone;
 use RuntimeException;
+use Exception;
 use Generator;
+
+use function array_key_exists;
+use function array_unique;
+use function array_column;
+use function iterator_to_array;
+use function count;
 
 class TimeBucket implements Countable, IteratorAggregate {
 
     /**
-     * @var SplPriorityQueue
+     * @var TimeOrderedQueue
      */
     protected $innerQueue;
 
+    /**
+     * Pre-defined formats to segment DateTime
+     */
     const SLICE_FORMATS = array(
         "year" => "Y",
         "month" => "Y-m",
@@ -33,24 +45,40 @@ class TimeBucket implements Countable, IteratorAggregate {
         "monthofyear" => "m",
         );
 
+    /**
+     * @var string Date format to segment DateTime into slices
+     */
     protected $sliceFormat;
+
+    /**
+     * @var DateTimeZone Timezone for the bucket
+     */
+    protected $timezone;
 
     /**
      * TimeBucket constructor.
      * @param string $slice The number of slices
+     * @param string Timezone for the bucket
      */
-    public function __construct(string $slice = 'second')
+    public function __construct(string $slice = 'second', $timezone = 'UTC')
     {
         $this->sliceFormat = array_key_exists($slice, static::SLICE_FORMATS) ? static::SLICE_FORMATS[$slice] : static::SLICE_FORMATS['second'];
         $this->innerQueue = new TimeOrderedQueue();
         $this->innerQueue->setExtractFlags(SplPriorityQueue::EXTR_BOTH);
+        $this->timezone = new DateTimeZone($timezone);
     }
 
+    /**
+     * @return int Number of items in the bucket
+     */
     public function count()
     {
         return count($this->innerQueue);
     }
 
+    /**
+     * @return int Number of unique timeslices in bucket
+     */
     public function sliceCount()
     {
         $iter = $this->getIterator();
@@ -63,11 +91,20 @@ class TimeBucket implements Countable, IteratorAggregate {
         return count(array_unique(array_column(iterator_to_array($iter), 0)));
     }
 
+    /**
+     * @return bool Is bucket empty
+     */
     public function isEmpty()
     {
         return $this->innerQueue->isEmpty();
     }
 
+    /**
+     * Insert data into the bucket
+     * @param $datum
+     * @param int|string|DateTimeInterface $priority Time linked to the data, can be Unix timestamp (int), DateTime String (string) or DateTimeInterface
+     * @throws Exception
+     */
     public function insert($datum, $priority)
     {
         if (is_int($priority))
@@ -77,25 +114,36 @@ class TimeBucket implements Countable, IteratorAggregate {
         }
         elseif($priority instanceof DateTimeInterface)
         {
-            $time = $priority;
+            if ($priority instanceof DateTime)
+            {
+                /** @var DateTime $priority */
+                $time = DateTimeImmutable::createFromMutable($priority);
+            }
+            else
+            {
+                $time = $priority;
+            }
         }
         else
         {
             $time = new DateTimeImmutable($priority);
         }
 
+        $time = $time->setTimezone($this->timezone);
         $priority = $time->format($this->sliceFormat);
         $this->innerQueue->insert($datum, $priority);
     }
 
+    /**
+     * @return TimeOrderedQueue
+     */
     public function getIterator()
     {
         return clone $this->innerQueue;
     }
 
-
     /**
-     * Gets the top timeslice
+     * Returns the timeslices in the bucket. Does not modify the timebucket
      * @return Generator|void
      */
     public function getTimeSlices()
@@ -108,6 +156,7 @@ class TimeBucket implements Countable, IteratorAggregate {
         $iter->setExtractFlags(SplPriorityQueue::EXTR_BOTH);
 
         $curPriority = null;
+        $items = [];
         while (!$iter->isEmpty())
         {
             $item = $iter->extract();
@@ -115,7 +164,6 @@ class TimeBucket implements Countable, IteratorAggregate {
             if (null == $curPriority)
             {
                 $curPriority = $itemPriority;
-                $items = [];
             }
 
             if ($curPriority == $itemPriority)
@@ -164,7 +212,7 @@ class TimeBucket implements Countable, IteratorAggregate {
     }
 
     /**
-     * Extract the next timeslice from the bucket. Pops the items from the bucket (ie pop)
+     * Extract the next timeslice from the bucket. Pops the items from the bucket.
      * @return array
      */
     public function extractTimeSlice()
@@ -199,5 +247,4 @@ class TimeBucket implements Countable, IteratorAggregate {
         }
         return [$curPriority => $items];
     }
-
 }

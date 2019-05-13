@@ -8,7 +8,7 @@ use \EdgeTelemetrics\TimeBucket\TimeBucket;
 // Load Composer
 require '../vendor/autoload.php';
 
-$random_count = 4000;
+$random_count = 400;
 $dates = [];
 
 $time_start = microtime(true);

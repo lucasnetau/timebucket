@@ -10,6 +10,9 @@
     "ext-json": "*",
     "symfony/polyfill-php73": "^1.10"
     },
+  "require-dev": {
+    "ext-json": "*"
+  },
   "autoload": {
     "psr-4": {"EdgeTelemetrics\\TimeBucket\\": "src/"}
   }
