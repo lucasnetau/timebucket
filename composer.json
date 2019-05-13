@@ -1,0 +1,16 @@
+{
+  "name": "edgetelemetrics/timebucket",
+  "description": "Group events into time slices",
+  "keywords": ["time", "bucket"],
+  "license": "MIT",
+  "authors": [ { "name": "James Lucas", "email": "james@lucas.net.au" } ],
+  "type": "library",
+  "require": {
+    "php": ">=7.2",
+    "ext-json": "*",
+    "symfony/polyfill-php73": "^1.10"
+    },
+  "autoload": {
+    "psr-4": {"EdgeTelemetrics\\TimeBucket\\": "src/"}
+  }
+}
