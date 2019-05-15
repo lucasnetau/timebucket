@@ -12,6 +12,8 @@ use DateTimeZone;
 use RuntimeException;
 use Exception;
 use Generator;
+use Serializable;
+use JsonSerializable;
 
 use function array_key_exists;
 use function array_unique;
@@ -19,7 +21,7 @@ use function array_column;
 use function iterator_to_array;
 use function count;
 
-class TimeBucket implements Countable, IteratorAggregate {
+class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSerializable {
 
     /**
      * @var TimeOrderedQueue
@@ -246,5 +248,32 @@ class TimeBucket implements Countable, IteratorAggregate {
             }
         }
         return [$curPriority => $items];
+    }
+
+    public function jsonSerialize()
+    {
+        return ['data' => iterator_to_array($this->getTimeSlices()),  'sliceFormat' => $this->sliceFormat, 'timezone' => $this->timezone];
+    }
+
+    public function serialize()
+    {
+        return serialize($this->jsonSerialize());
+    }
+
+    public function unserialize($serialized)
+    {
+        $data = unserialize($serialized);
+
+        $this->__construct();
+        $this->timezone = $data['timezone'];
+        $this->sliceFormat = $data['sliceFormat'];
+
+        foreach($data['data'] as $priority => $items)
+        {
+            foreach ($items as $item)
+            {
+                $this->insert($priority, $item);
+            }
+        }
     }
 }

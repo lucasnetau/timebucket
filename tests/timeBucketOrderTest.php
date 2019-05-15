@@ -8,12 +8,12 @@ use \EdgeTelemetrics\TimeBucket\TimeBucket;
 // Load Composer
 require '../vendor/autoload.php';
 
-$random_count = 400;
+$random_count = 4000;
 $dates = [];
 
 $time_start = microtime(true);
 
-$bucket = new TimeBucket('second');
+$bucket = new TimeBucket('hour');
 
 for($i = 0; $i < $random_count; $i++)
 {
@@ -21,14 +21,7 @@ for($i = 0; $i < $random_count; $i++)
     $bucket->insert( "test $i", (new DateTimeImmutable())->setTimestamp($timestamp));
 }
 
-foreach($bucket->getTimeSlices() as $priority => $items)
-{
-    echo $priority . PHP_EOL;
-    foreach($items as $item) {
-       echo json_encode($item) . PHP_EOL;
-    }
-    echo PHP_EOL;
-}
+echo json_encode(iterator_to_array($bucket->getTimeSlices()));
 
 echo count($bucket) . " datapoints" . PHP_EOL;
 echo count(iterator_to_array($bucket->getTimeSlices(), true)) . " timeslices" . PHP_EOL;
