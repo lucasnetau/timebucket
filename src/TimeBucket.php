@@ -179,7 +179,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
                 $items = [$item['data']];
             }
         }
-        yield $curPriority => $items;
+        yield $curPriority =>  array_unique($items, SORT_REGULAR); /** @TODO Simplifiy the dedupe function */
     }
 
     /**
@@ -210,7 +210,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
                 break;
             }
         }
-        return [$curPriority => $items];
+        return [$curPriority =>  array_unique($items, SORT_REGULAR)]; /** @TODO Simplifiy the dedupe function */;
     }
 
     /**
@@ -247,7 +247,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
                 break;
             }
         }
-        return [$curPriority => $items];
+        return [$curPriority => array_unique($items, SORT_REGULAR)]; /** @TODO Simplifiy the dedupe function */
     }
 
     public function jsonSerialize()
