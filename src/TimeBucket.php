@@ -20,6 +20,8 @@ use function array_unique;
 use function array_column;
 use function iterator_to_array;
 use function count;
+use function serialize;
+use function unserialize;
 
 class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSerializable {
 
@@ -83,14 +85,10 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
      */
     public function sliceCount()
     {
-        $iter = $this->getIterator();
+        $iter = $this->getIterator(); //Perform this action on a copy of the queue to ensure we don't modify it
         $iter->setExtractFlags(SplPriorityQueue::EXTR_PRIORITY);
 
-        if ($iter->isEmpty()) {
-            return 0;
-        }
-
-        return count(array_unique(array_column(iterator_to_array($iter), 0)));
+        return $iter->isEmpty() ? 0 : count(array_unique(array_column(iterator_to_array($iter), 0)));
     }
 
     /**
@@ -179,7 +177,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
                 $items = [$item['data']];
             }
         }
-        yield $curPriority =>  array_unique($items, SORT_REGULAR); /** @TODO Simplifiy the dedupe function */
+        yield $curPriority => $this->unique($items);
     }
 
     /**
@@ -210,7 +208,16 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
                 break;
             }
         }
-        return [$curPriority =>  array_unique($items, SORT_REGULAR)]; /** @TODO Simplifiy the dedupe function */;
+        return [$curPriority => $this->unique($items)];
+    }
+
+    /**
+     * Get the number of items in the next timeslice.
+     * @return int
+     */
+    public function nextTimeSliceCount()
+    {
+        return $this->isEmpty() ? 0 : count(current($this->nextTimeSlice()));
     }
 
     /**
@@ -247,7 +254,13 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
                 break;
             }
         }
-        return [$curPriority => array_unique($items, SORT_REGULAR)]; /** @TODO Simplifiy the dedupe function */
+        return [$curPriority => $this->unique($items)];
+    }
+
+    public function unique(array $items) : array
+    {
+        /** Very basic dedupe function. SORT_REGULAR does a == comparison */
+        return array_unique($items, SORT_REGULAR);
     }
 
     public function jsonSerialize()
