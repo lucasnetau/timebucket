@@ -217,7 +217,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
      */
     public function nextTimeSliceCount()
     {
-        return $this->isEmpty() ? 0 : count(current($this->nextTimeSlice()));
+        return $this->isEmpty() ? 0 : count($this->nextTimeSlice()['data']);
     }
 
     /**
@@ -298,11 +298,10 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         $this->timezone = $data['timezone'];
         $this->sliceFormat = $data['sliceFormat'];
 
-        foreach($data['data'] as $priority => $items)
+        foreach($data['data'] as ['time' => $priority, 'data' => $items])
         {
-            foreach ($items as $item)
-            {
-                $this->insert($priority, $item);
+            foreach ($items as $item) {
+                $this->insert($item, $priority);
             }
         }
     }
