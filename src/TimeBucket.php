@@ -33,21 +33,21 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
     /**
      * Pre-defined formats to segment DateTime
      */
-    const SLICE_FORMATS = array(
+    const SLICE_FORMATS = [
         "year" => "Y",
         "month" => "Y-m",
         "quarter" => "Y-Q{q}",
         "week" => "Y-W",
         "date" => "Y-m-d",
         "day" => "Y-m-d",
-        "hour" => "Y-m-d H",
-        "minute" => "Y-m-d H:i",
+        "hour" => "Y-m-d H:00:00",
+        "minute" => "Y-m-d H:i:00",
         "second" => "Y-m-d H:i:s",
         "dayofmonth" => "d",
         "dayofweek" => "w",
         "hourofday" => "H",
         "monthofyear" => "m",
-        );
+        ];
 
     /**
      * @var string Date format to segment DateTime into slices
@@ -172,12 +172,12 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
             }
             else
             {
-                yield $curPriority => $items;
+                yield ['time' => $curPriority, 'data' => $this->unique($items)];
                 $curPriority = $itemPriority;
                 $items = [$item['data']];
             }
         }
-        yield $curPriority => $this->unique($items);
+        yield ['time' => $curPriority, 'data' => $this->unique($items)];
     }
 
     /**
@@ -208,7 +208,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
                 break;
             }
         }
-        return [$curPriority => $this->unique($items)];
+        return ['time' => $curPriority, 'data' => $this->unique($items)];
     }
 
     /**
@@ -254,13 +254,30 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
                 break;
             }
         }
-        return [$curPriority => $this->unique($items)];
+        return ['time' => $curPriority, 'data' => $this->unique($items)];
     }
 
     public function unique(array $items) : array
     {
         /** Very basic dedupe function. SORT_REGULAR does a == comparison */
         return array_unique($items, SORT_REGULAR);
+    }
+
+
+    /**
+     * Round minutes to the nearest interval of a DateTime object.
+     *
+     * @param DateTimeImmutable $dateTime
+     * @param int $minuteInterval
+     * @return DateTimeImmutable
+     */
+    public function roundToNearestMinuteInterval(DateTimeImmutable $dateTime, $minuteInterval = 10) : DateTimeImmutable
+    {
+        return $dateTime->setTime(
+            $dateTime->format('H'),
+            round($dateTime->format('i') / $minuteInterval) * $minuteInterval,
+            0
+        );
     }
 
     public function jsonSerialize()
