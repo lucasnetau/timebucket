@@ -274,8 +274,8 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
     public function roundToNearestMinuteInterval(DateTimeImmutable $dateTime, $minuteInterval = 10) : DateTimeImmutable
     {
         return $dateTime->setTime(
-            $dateTime->format('H'),
-            round($dateTime->format('i') / $minuteInterval) * $minuteInterval,
+            (int)$dateTime->format('H'),
+            (int)round($dateTime->format('i') / $minuteInterval) * $minuteInterval,
             0
         );
     }
