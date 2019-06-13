@@ -17,7 +17,6 @@ use JsonSerializable;
 
 use function array_key_exists;
 use function array_unique;
-use function array_column;
 use function iterator_to_array;
 use function count;
 use function serialize;
@@ -67,7 +66,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
     public function __construct(string $slice = 'second', $timezone = 'UTC')
     {
         $this->sliceFormat = array_key_exists($slice, static::SLICE_FORMATS) ? static::SLICE_FORMATS[$slice] : static::SLICE_FORMATS['second'];
-        $this->innerQueue = new TimeOrderedQueue();
+        $this->innerQueue = new TimeOrderedArray();
         $this->innerQueue->setExtractFlags(SplPriorityQueue::EXTR_BOTH);
         $this->timezone = new DateTimeZone($timezone);
     }
@@ -87,8 +86,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
     {
         $iter = $this->getIterator(); //Perform this action on a copy of the queue to ensure we don't modify it
         $iter->setExtractFlags(SplPriorityQueue::EXTR_PRIORITY);
-
-        return $iter->isEmpty() ? 0 : count(array_unique(array_column(iterator_to_array($iter), 0)));
+        return $iter->isEmpty() ? 0 : count(array_unique(iterator_to_array($iter)));
     }
 
     /**
@@ -160,7 +158,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         while (!$iter->isEmpty())
         {
             $item = $iter->extract();
-            $itemPriority = $item['priority'][0];
+            $itemPriority = $item['priority'];
             if (null == $curPriority)
             {
                 $curPriority = $itemPriority;
@@ -197,7 +195,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         $items = [];
         while (!$iter->isEmpty()) {
             $item = $iter->extract();
-            $itemPriority = $item['priority'][0];
+            $itemPriority = $item['priority'];
             if (null == $curPriority) {
                 $curPriority = $itemPriority;
             }
@@ -238,7 +236,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         while (!$iter->isEmpty())
         {
             $item = $iter->top();
-            $itemPriority = $item['priority'][0];
+            $itemPriority = $item['priority'];
             if (null == $curPriority)
             {
                 $curPriority = $itemPriority;
