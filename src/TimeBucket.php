@@ -299,7 +299,11 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         foreach($data['data'] as ['time' => $priority, 'data' => $items])
         {
             foreach ($items as $item) {
-                $this->insert($item, $priority);
+                /**
+                 * Insert items directly into the queue bypassing the class insert().
+                 * This is required to handle insertion of priorities that use sliceFormats like hourofday which resolve to an int.
+                 */
+                $this->innerQueue->insert($item, $priority);
             }
         }
     }
