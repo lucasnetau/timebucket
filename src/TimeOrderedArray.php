@@ -6,6 +6,12 @@ use Iterator;
 use Countable;
 use SplPriorityQueue;
 
+use function uksort;
+use function array_key_exists;
+use function array_key_last;
+use function current;
+use function next;
+
 /**
  * Class TimeOrderedArray
  * @package EdgeTelemetrics\TimeBucket
@@ -29,6 +35,12 @@ class TimeOrderedArray implements Iterator, Countable {
      * @var array
      */
     protected $priorities = [];
+
+    /**
+     * Flag to let us know if priorities have been sorted
+     * @var bool
+     */
+    protected $prioritiesUnsorted = false;
 
     /**
      * Top priority contained in the queue
@@ -77,12 +89,17 @@ class TimeOrderedArray implements Iterator, Countable {
      */
     public function insert($value, $priority)
     {
-        $this->values[$priority][] = $value;
-        if (!isset($this->priorities[$priority])) {
-            $this->priorities[$priority] = $priority;
-            uasort($this->priorities, array($this, 'compare'));
-            $this->top = array_key_last($this->priorities);
+        if (!array_key_exists($priority, $this->priorities))
+        {
+            $this->values[] = [];
+            $newIndex = array_key_last($this->values);
+            $this->priorities[$priority] = $newIndex;
+            $this->prioritiesUnsorted = true;
+            if (null === $this->top || 1 == $this->compare($priority, $this->top)) {
+                $this->top = $priority;
+            }
         }
+        $this->values[$this->priorities[$priority]][] = $value;
         ++$this->total;
     }
 
@@ -133,7 +150,7 @@ class TimeOrderedArray implements Iterator, Countable {
     public function current()
     {
         $priority = $this->top;
-        $value = current($this->values[$priority]);
+        $value = current($this->values[$this->priorities[$priority]]);
         switch ($this->mode) {
             case SplPriorityQueue::EXTR_BOTH :
                 return ['data' => $value, 'priority' => $priority];
@@ -164,9 +181,15 @@ class TimeOrderedArray implements Iterator, Countable {
      */
     public function next()
     {
-        if (false === next($this->values[$this->top])) {
+        if (false === next($this->values[$this->priorities[$this->top]])) {
+            unset($this->values[$this->priorities[$this->top]]);
             unset($this->priorities[$this->top]);
-            unset($this->values[$this->top]);
+            /** We delay sorting of priorities until we start reading them. */
+            if ($this->prioritiesUnsorted)
+            {
+                uksort($this->priorities, array($this, 'compare'));
+                $this->prioritiesUnsorted = false;
+            }
             $this->top = empty($this->priorities) ? null : array_key_last($this->priorities);
             /** Re-initialise the arrays to allow the GC to cleanup */
             if (empty($this->priorities))
