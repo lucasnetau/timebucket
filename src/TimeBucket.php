@@ -21,6 +21,7 @@ use function iterator_to_array;
 use function count;
 use function serialize;
 use function unserialize;
+use function is_int;
 
 class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSerializable {
 
