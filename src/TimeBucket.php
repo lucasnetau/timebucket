@@ -61,7 +61,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
 
     /**
      * TimeBucket constructor.
-     * @param string $slice The number of slices
+     * @param string $slice The slice type for the bucket
      * @param string Timezone for the bucket
      */
     public function __construct(string $slice = 'second', $timezone = 'UTC')
