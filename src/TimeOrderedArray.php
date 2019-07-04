@@ -125,11 +125,10 @@ class TimeOrderedArray implements Iterator, Countable {
      */
     public function top()
     {
-        if (!$this->valid()) {
+        if ($this->isEmpty()) {
             return false;
         }
-        $value = $this->current();
-        return $value;
+        return$this->current();
     }
 
     /**
@@ -226,7 +225,7 @@ class TimeOrderedArray implements Iterator, Countable {
      */
     public function isEmpty()
     {
-        return !$this->valid();
+        return null === $this->top;
     }
 
     /**
