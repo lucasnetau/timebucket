@@ -62,14 +62,18 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
     /**
      * TimeBucket constructor.
      * @param string $slice The slice type for the bucket
-     * @param string Timezone for the bucket
+     * @param string|DateTimeZone Timezone for the bucket
      */
     public function __construct(string $slice = 'second', $timezone = 'UTC')
     {
         $this->sliceFormat = array_key_exists($slice, static::SLICE_FORMATS) ? static::SLICE_FORMATS[$slice] : static::SLICE_FORMATS['second'];
         $this->innerQueue = new TimeOrderedArray();
         $this->innerQueue->setExtractFlags(SplPriorityQueue::EXTR_BOTH);
-        $this->timezone = new DateTimeZone($timezone);
+        if ($timezone instanceof DateTimeZone) {
+            $this->timezone = $timezone;
+        } else {
+            $this->timezone = new DateTimeZone($timezone);
+        }
     }
 
     /**
