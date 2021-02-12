@@ -1,5 +1,14 @@
 <?php declare(strict_types=1);
 
+/*
+ * This file is part of the TimeBucket package.
+ *
+ * (c) James Lucas <james@lucas.net.au>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace EdgeTelemetrics\TimeBucket;
 
 use SplPriorityQueue;
@@ -26,9 +35,9 @@ use function is_int;
 class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSerializable {
 
     /**
-     * @var TimeOrderedQueue
+     * @var TimeBucketImplementationInterface
      */
-    protected $innerQueue;
+    protected TimeBucketImplementationInterface $innerQueue;
 
     /**
      * Pre-defined formats to segment DateTime
@@ -52,12 +61,12 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
     /**
      * @var string Date format to segment DateTime into slices
      */
-    protected $sliceFormat;
+    protected string $sliceFormat;
 
     /**
      * @var DateTimeZone Timezone for the bucket
      */
-    protected $timezone;
+    protected DateTimeZone $timezone;
 
     /**
      * TimeBucket constructor.
@@ -79,7 +88,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
     /**
      * @return int Number of items in the bucket
      */
-    public function count()
+    public function count() : int
     {
         return count($this->innerQueue);
     }
@@ -87,7 +96,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
     /**
      * @return int Number of unique timeslices in bucket
      */
-    public function sliceCount()
+    public function sliceCount() : int
     {
         $iter = $this->getIterator(); //Perform this action on a copy of the queue to ensure we don't modify it
         $iter->setExtractFlags(SplPriorityQueue::EXTR_PRIORITY);
@@ -113,7 +122,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         if (is_int($priority))
         {
             /** Integer is processed as a UNIX timestamp */
-            $time = (new DateTimeImmutable())->setTimestamp($priority);
+            $time = DateTimeImmutable::createFromFormat('U', (string)$priority);
         }
         elseif($priority instanceof DateTimeInterface)
         {
@@ -138,9 +147,9 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
     }
 
     /**
-     * @return TimeOrderedQueue
+     * @return TimeBucketImplementationInterface
      */
-    public function getIterator()
+    public function getIterator() : TimeBucketImplementationInterface
     {
         return clone $this->innerQueue;
     }
@@ -285,7 +294,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
 
     public function jsonSerialize()
     {
-        return ['data' => iterator_to_array($this->getTimeSlices()),  'sliceFormat' => $this->sliceFormat, 'timezone' => $this->timezone];
+        return ['data' => iterator_to_array($this->getTimeSlices()), 'sliceFormat' => $this->sliceFormat, 'timezone' => $this->timezone];
     }
 
     public function serialize()

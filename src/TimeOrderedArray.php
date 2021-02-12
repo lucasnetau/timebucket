@@ -1,5 +1,14 @@
 <?php declare(strict_types=1);
 
+/*
+ * This file is part of the TimeBucket package.
+ *
+ * (c) James Lucas <james@lucas.net.au>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace EdgeTelemetrics\TimeBucket;
 
 use Iterator;
@@ -20,53 +29,53 @@ use function next;
  *
  * For large number of items this implementation uses 10% of memory as SplPriorityQueue and is ~ 50% faster
  */
-class TimeOrderedArray implements Iterator, Countable {
+class TimeOrderedArray implements Iterator, Countable, TimeBucketImplementationInterface {
 
     /**
      * Queue elements (keyed by priority)
      *
      * @var array
      */
-    protected $values = [];
+    protected array $values = [];
 
     /**
      * Sorted array of priorities
      *
      * @var array
      */
-    protected $priorities = [];
+    protected array $priorities = [];
 
     /**
      * Flag to let us know if priorities have been sorted
      * @var bool
      */
-    protected $prioritiesUnsorted = false;
+    protected bool $prioritiesUnsorted = false;
 
     /**
      * Top priority contained in the queue
      *
-     * @var int
+     * @var ?int|string
      */
-    protected $top;
+    protected $top = null;
 
     /**
      * Total elements contained in the queue
      *
      * @var int
      */
-    protected $total = 0;
+    protected int $total = 0;
 
     /**
      * Counter for current index in the queue
      *
      * @var int
      */
-    protected $index = 0;
+    protected int $index = 0;
 
     /**
      * @var int Extraction mode - Same as SplPriorityQueue extraction mode
      */
-    protected $mode = SplPriorityQueue::EXTR_DATA;
+    protected int $mode = SplPriorityQueue::EXTR_DATA;
 
     /**
      * Compare function for sorting of priorities. This provides a min Priority Queue
@@ -74,7 +83,7 @@ class TimeOrderedArray implements Iterator, Countable {
      * @param $priority2
      * @return int
      */
-    public function compare($priority1, $priority2)
+    public function compare($priority1, $priority2) : int
     {
         if ($priority1 === $priority2) return 0;
 
@@ -136,7 +145,7 @@ class TimeOrderedArray implements Iterator, Countable {
      *
      * @return int
      */
-    public function count()
+    public function count() : int
     {
         return $this->total;
     }
@@ -170,7 +179,7 @@ class TimeOrderedArray implements Iterator, Countable {
      *
      * @return int
      */
-    public function key()
+    public function key() : int
     {
         return $this->index;
     }
@@ -206,7 +215,7 @@ class TimeOrderedArray implements Iterator, Countable {
      *
      * @return bool
      */
-    public function valid()
+    public function valid() : bool
     {
         return null !== $this->top;
     }
@@ -223,16 +232,16 @@ class TimeOrderedArray implements Iterator, Countable {
      * Check if the queue is empty
      * @return bool
      */
-    public function isEmpty()
+    public function isEmpty() : bool
     {
         return null === $this->top;
     }
 
     /**
      * Set the extraction flag for the queue. Priority / Data / Both
-     * @param $flag
+     * @param int $flag
      */
-    public function setExtractFlags($flag)
+    public function setExtractFlags(int $flag)
     {
         $this->mode = $flag;
     }
@@ -241,7 +250,7 @@ class TimeOrderedArray implements Iterator, Countable {
      * Get the current extraction flag for the queue
      * @return int
      */
-    public function getExtractFlags()
+    public function getExtractFlags() : int
     {
        return $this->mode;
     }

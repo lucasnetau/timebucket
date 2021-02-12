@@ -1,24 +1,33 @@
 <?php declare(strict_types=1);
 
+/*
+ * This file is part of the TimeBucket package.
+ *
+ * (c) James Lucas <james@lucas.net.au>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace EdgeTelemetrics\TimeBucket;
 
-use \SplPriorityQueue;
+use SplPriorityQueue;
 
-class TimeOrderedQueue extends SplPriorityQueue {
+class TimeOrderedQueue extends SplPriorityQueue implements TimeBucketImplementationInterface {
     /**
      * @var int
      */
-    protected $serial = PHP_INT_MIN;
+    protected int $serial = PHP_INT_MIN;
 
-    public function insert($datum, $priority)
+    public function insert($value, $priority)
     {
         if (! is_array($priority)) {
             $priority = [$priority, $this->serial++];
         }
-        parent::insert($datum, $priority);
+        parent::insert($value, $priority);
     }
 
-    public function compare($priority1, $priority2)
+    public function compare($priority1, $priority2) : int
     {
         if ($priority1 === $priority2) return 0;
 
