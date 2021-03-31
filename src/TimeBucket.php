@@ -106,7 +106,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
     /**
      * @return bool Is bucket empty
      */
-    public function isEmpty()
+    public function isEmpty(): bool
     {
         return $this->innerQueue->isEmpty();
     }
@@ -158,7 +158,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
      * Returns the timeslices in the bucket. Does not modify the timebucket
      * @return Generator|void
      */
-    public function getTimeSlices()
+    public function getTimeSlices(): Generator
     {
         if ($this->innerQueue->isEmpty()) {
             return;
@@ -227,7 +227,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
      * Get the number of items in the next timeslice.
      * @return int
      */
-    public function nextTimeSliceCount()
+    public function nextTimeSliceCount(): int
     {
         return $this->isEmpty() ? 0 : count($this->nextTimeSlice()['data']);
     }
@@ -236,7 +236,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
      * Extract the next timeslice from the bucket. Pops the items from the bucket.
      * @return array
      */
-    public function extractTimeSlice()
+    public function extractTimeSlice(): array
     {
         if ($this->innerQueue->isEmpty()) {
             throw new RuntimeException("Cannot extract time slice from empty Time Bucket");
