@@ -254,7 +254,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
             if (null == $curPriority)
             {
                 $curPriority = $itemPriority;
-           }
+            }
 
             if ($curPriority == $itemPriority)
             {
@@ -269,12 +269,54 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         return ['time' => $curPriority, 'data' => $this->unique($items)];
     }
 
+    /**
+     * A very basic deduplication function for returning values from a timeslice
+     * @param array $items
+     * @return array
+     */
     public function unique(array $items) : array
     {
-        /** Very basic dedupe function. SORT_REGULAR does a == comparison */
+        /** SORT_REGULAR does a == comparison (loose) */
         return array_unique($items, SORT_REGULAR);
     }
 
+    /**
+     * Return the defined slice format for the bucket
+     * @return string
+     */
+    public function getTimeFormat() : string {
+        return $this->sliceFormat;
+    }
+
+    /**
+     * @return Generator
+     * @throws Exception
+     */
+    public function getTimeIndex() : Generator {
+        if ($this->innerQueue->isEmpty()) {
+            return;
+        }
+
+        /** Calculate time difference in seconds between items in the bucket */
+        $iter = $this->getIterator();
+        $iter->setExtractFlags(SplPriorityQueue::EXTR_PRIORITY);
+
+        $curPriority = null;
+        while (!$iter->isEmpty()) {
+            $priority = $iter->extract();
+            $itemPriority = DateTimeImmutable::createFromFormat($this->sliceFormat, $priority);
+            if (null === $curPriority) {
+                $curPriority = $itemPriority;
+                yield $itemPriority;
+            } else {
+                $difference = (int)$itemPriority->format('U') - (int)$curPriority->format('U');
+                if ($difference > 0) {
+                    $curPriority = $itemPriority;
+                    yield $itemPriority;
+                }
+            }
+        }
+    }
 
     /**
      * Round minutes to the nearest interval of a DateTime object.
@@ -292,12 +334,12 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         );
     }
 
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return ['data' => iterator_to_array($this->getTimeSlices()), 'sliceFormat' => $this->sliceFormat, 'timezone' => $this->timezone];
     }
 
-    public function serialize()
+    public function serialize(): ?string
     {
         return serialize($this->jsonSerialize());
     }
