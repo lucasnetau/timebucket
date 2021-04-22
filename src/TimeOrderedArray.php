@@ -162,14 +162,10 @@ class TimeOrderedArray implements Iterator, Countable, TimeBucketImplementationI
         switch ($this->mode) {
             case SplPriorityQueue::EXTR_BOTH :
                 return ['data' => $value, 'priority' => $priority];
-                break;
             case SplPriorityQueue::EXTR_PRIORITY :
                 return $priority;
-                break;
-
             case SplPriorityQueue::EXTR_DATA :
                 return $value;
-                break;
         }
         return false;
     }
