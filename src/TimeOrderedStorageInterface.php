@@ -11,7 +11,7 @@
 
 namespace EdgeTelemetrics\TimeBucket;
 
-interface TimeBucketImplementationInterface {
+interface TimeOrderedStorageInterface {
     public function insert($value, $priority);
     public function count();
     public function current();

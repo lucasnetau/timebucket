@@ -29,7 +29,7 @@ use function next;
  *
  * For large number of items this implementation uses 10% of memory as SplPriorityQueue and is ~ 50% faster
  */
-class TimeOrderedArray implements Iterator, Countable, TimeBucketImplementationInterface {
+class TimeOrderedArray implements Iterator, Countable, TimeOrderedStorageInterface {
 
     /**
      * Queue elements (keyed by priority)

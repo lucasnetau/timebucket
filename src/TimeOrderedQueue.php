@@ -13,7 +13,7 @@ namespace EdgeTelemetrics\TimeBucket;
 
 use SplPriorityQueue;
 
-class TimeOrderedQueue extends SplPriorityQueue implements TimeBucketImplementationInterface {
+class TimeOrderedQueue extends SplPriorityQueue implements TimeOrderedStorageInterface {
     /**
      * @var int
      */
