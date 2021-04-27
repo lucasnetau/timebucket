@@ -35,9 +35,9 @@ use function is_int;
 class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSerializable {
 
     /**
-     * @var TimeBucketImplementationInterface
+     * @var TimeOrderedStorageInterface
      */
-    protected TimeBucketImplementationInterface $innerQueue;
+    protected TimeOrderedStorageInterface $innerQueue;
 
     /**
      * Pre-defined formats to segment DateTime
@@ -50,8 +50,11 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         "date" => "Y-m-d",
         "day" => "Y-m-d",
         "hour" => "Y-m-d H:00:00",
+        "hourtz" => "Y-m-d\TH:00:00P",
         "minute" => "Y-m-d H:i:00",
+        "minutetz" => "Y-m-d\TH:i:00P",
         "second" => "Y-m-d H:i:s",
+        "secondtz" => "Y-m-d\TH:i:sP",
         "dayofmonth" => "d",
         "dayofweek" => "w",
         "hourofday" => "H",
@@ -147,9 +150,9 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
     }
 
     /**
-     * @return TimeBucketImplementationInterface
+     * @return TimeOrderedStorageInterface
      */
-    public function getIterator() : TimeBucketImplementationInterface
+    public function getIterator() : TimeOrderedStorageInterface
     {
         return clone $this->innerQueue;
     }
