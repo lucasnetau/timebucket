@@ -328,7 +328,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
      * @param int $minuteInterval
      * @return DateTimeImmutable
      */
-    public function roundToNearestMinuteInterval(DateTimeImmutable $dateTime, $minuteInterval = 10) : DateTimeImmutable
+    public function roundToNearestMinuteInterval(DateTimeImmutable $dateTime, int $minuteInterval = 10) : DateTimeImmutable
     {
         return $dateTime->setTime(
             (int)$dateTime->format('H'),
@@ -347,9 +347,9 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         return serialize($this->jsonSerialize());
     }
 
-    public function unserialize($serialized)
+    public function unserialize($data)
     {
-        $data = unserialize($serialized);
+        $data = unserialize($data);
 
         $this->__construct();
         $this->timezone = $data['timezone'];
