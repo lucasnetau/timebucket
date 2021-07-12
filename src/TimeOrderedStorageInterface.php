@@ -11,8 +11,18 @@
 
 namespace EdgeTelemetrics\TimeBucket;
 
-interface TimeOrderedStorageInterface {
+use Countable;
+use Iterator;
+
+/**
+ * Interface TimeOrderedStorageInterface
+ * @package EdgeTelemetrics\TimeBucket
+ */
+interface TimeOrderedStorageInterface extends Iterator, Countable {
     public function insert($value, $priority);
+    /**
+     * @return int
+     */
     public function count();
     public function current();
     public function compare($priority1, $priority2) : int;

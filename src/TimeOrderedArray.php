@@ -11,8 +11,6 @@
 
 namespace EdgeTelemetrics\TimeBucket;
 
-use Iterator;
-use Countable;
 use SplPriorityQueue;
 
 use function uksort;
@@ -29,7 +27,7 @@ use function next;
  *
  * For large number of items this implementation uses 10% of memory as SplPriorityQueue and is ~ 50% faster
  */
-class TimeOrderedArray implements Iterator, Countable, TimeOrderedStorageInterface {
+class TimeOrderedArray implements TimeOrderedStorageInterface {
 
     /**
      * Queue elements (keyed by priority)
