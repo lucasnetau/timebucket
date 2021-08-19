@@ -337,6 +337,13 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         );
     }
 
+    /**
+     * @return DateTimeZone
+     */
+    public function getTimezone() : DateTimeZone {
+        return $this->timezone;
+    }
+
     public function jsonSerialize(): array
     {
         return ['data' => iterator_to_array($this->getTimeSlices()), 'sliceFormat' => $this->sliceFormat, 'timezone' => $this->timezone];
