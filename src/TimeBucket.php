@@ -373,4 +373,12 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
             }
         }
     }
+
+    /**
+     * Support deep cloning of TimeBuckets to ensure the inner queue is cloned
+     */
+    function __clone()
+    {
+        $this->innerQueue = clone $this->innerQueue;
+    }
 }
