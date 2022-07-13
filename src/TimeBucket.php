@@ -107,6 +107,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
     }
 
     /**
+     * @phpstan-impure
      * @return bool Is bucket empty
      */
     public function isEmpty(): bool
@@ -359,7 +360,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         $data = unserialize($data);
 
         $this->__construct();
-        $this->timezone = $data['timezone'];
+        $this->timezone = $data['timezone'] ?? new DateTimeZone('UTC');
         $this->sliceFormat = $data['sliceFormat'];
 
         foreach($data['data'] as ['time' => $priority, 'data' => $items])
