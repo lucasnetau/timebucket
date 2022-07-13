@@ -23,9 +23,10 @@ interface TimeOrderedStorageInterface extends Iterator, Countable {
     /**
      * @return int
      */
-    public function count();
+    public function count() : int;
     public function current();
     public function compare($priority1, $priority2) : int;
     public function extract();
     public function top();
+    public function isEmpty() : bool;
 }
