@@ -132,7 +132,6 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         {
             if ($priority instanceof DateTime)
             {
-                /** @var DateTime $priority */
                 $time = DateTimeImmutable::createFromMutable($priority);
             }
             else
@@ -160,7 +159,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
 
     /**
      * Returns the timeslices in the bucket. Does not modify the timebucket
-     * @return Generator|void
+     * @return Generator{time: string, data: array}|void
      */
     public function getTimeSlices(): Generator
     {
@@ -198,7 +197,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
 
     /**
      * Return the next timeslice in the bucket. Does not remove items from the bucket (ie peek)
-     * @return array|bool
+     * @return array{time: string, data: array}|bool
      */
     public function nextTimeSlice()
     {
@@ -238,7 +237,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
 
     /**
      * Extract the next timeslice from the bucket. Pops the items from the bucket.
-     * @return array
+     * @return array{time: string, data: array}
      */
     public function extractTimeSlice(): array
     {
