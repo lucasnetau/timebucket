@@ -359,21 +359,35 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
 
     public function jsonSerialize(): array
     {
-        return ['data' => iterator_to_array($this->getTimeSlices()), 'sliceFormat' => $this->sliceFormat, 'timezone' => $this->timezone];
+        return [
+            'data' => iterator_to_array($this->getTimeSlices()),
+            'sliceFormat' => $this->sliceFormat,
+            'interval' => $this->interval,
+            'timezone' => $this->timezone,
+        ];
     }
 
+    /**
+     * @return array
+     */
+    public function __serialize(): array
+    {
+        return $this->jsonSerialize();
+    }
+
+    /**
+     * @deprecated Legacy interface
+     */
     public function serialize(): ?string
     {
         return serialize($this->jsonSerialize());
     }
 
-    public function unserialize($data)
-    {
-        $data = unserialize($data);
-
+    public function __unserialize(array $data) {
         $this->__construct();
         $this->timezone = $data['timezone'] ?? new DateTimeZone('UTC');
         $this->sliceFormat = $data['sliceFormat'];
+        $this->interval = $data['interval'];
 
         foreach($data['data'] as ['time' => $priority, 'data' => $items])
         {
@@ -385,6 +399,16 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
                 $this->innerQueue->insert($item, $priority);
             }
         }
+    }
+
+    /**
+     * @deprecated Legacy interface
+     */
+    public function unserialize($data)
+    {
+        $data = unserialize($data);
+
+        $this->__unserialize($data);
     }
 
     /**
