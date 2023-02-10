@@ -181,7 +181,7 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
     /**
      * Next element on the queue.
      */
-    public function next()
+    public function next() : void
     {
         if (false === next($this->values[$this->priorities[$this->top]])) {
             unset($this->values[$this->priorities[$this->top]]);
@@ -217,7 +217,7 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
     /**
      * Rewind not valid for the queue
      */
-    public function rewind()
+    public function rewind() : void
     {
         // NOOP
     }
