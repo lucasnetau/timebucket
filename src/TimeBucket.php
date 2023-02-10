@@ -28,6 +28,7 @@ use function array_key_exists;
 use function array_unique;
 use function iterator_to_array;
 use function count;
+use function preg_match;
 use function serialize;
 use function unserialize;
 use function is_int;
@@ -66,6 +67,9 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
      */
     protected string $sliceFormat;
 
+    /** @var int Interval to group time into slices */
+    protected int $interval = 1;
+
     /**
      * @var DateTimeZone Timezone for the bucket
      */
@@ -74,11 +78,16 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
     /**
      * TimeBucket constructor.
      * @param string $slice The slice type for the bucket
-     * @param string|DateTimeZone Timezone for the bucket
+     * @param string|DateTimeZone $timezone Timezone for the bucket
      */
     public function __construct(string $slice = 'second', $timezone = 'UTC')
     {
-        $this->sliceFormat = array_key_exists($slice, static::SLICE_FORMATS) ? static::SLICE_FORMATS[$slice] : static::SLICE_FORMATS['second'];
+        if (preg_match('#(?P<interval>\d+)\s+(?P<timepart>minute)#', $slice, $matches)) {
+            $this->sliceFormat = static::SLICE_FORMATS[$matches['timepart']];
+            $this->interval = (int)$matches['interval'];
+        } else {
+            $this->sliceFormat = array_key_exists($slice, static::SLICE_FORMATS) ? static::SLICE_FORMATS[$slice] : static::SLICE_FORMATS['second'];
+        }
         $this->innerQueue = new TimeOrderedArray();
         $this->innerQueue->setExtractFlags(SplPriorityQueue::EXTR_BOTH);
         if ($timezone instanceof DateTimeZone) {
@@ -145,6 +154,10 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         }
 
         $time = $time->setTimezone($this->timezone);
+        if ($this->interval !== 1) {
+            //If we have an interval more than one slice we round the values into the slice
+            $time = $this->roundToNearestMinuteInterval($time, $this->interval);
+        }
         $priority = $time->format($this->sliceFormat);
         $this->innerQueue->insert($datum, $priority);
     }
