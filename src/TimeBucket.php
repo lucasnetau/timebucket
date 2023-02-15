@@ -388,7 +388,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         $this->__construct();
         $this->timezone = $data['timezone'] ?? new DateTimeZone('UTC');
         $this->sliceFormat = $data['sliceFormat'];
-        $this->interval = $data['interval'];
+        $this->interval = $data['interval'] ?? 1;
 
         foreach($data['data'] as ['time' => $priority, 'data' => $items])
         {
