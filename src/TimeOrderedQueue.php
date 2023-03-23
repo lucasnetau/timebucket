@@ -49,7 +49,7 @@ class TimeOrderedQueue extends SplPriorityQueue implements TimeOrderedStorageInt
         return $extract;
     }
 
-    public function current()
+    public function current() : mixed
     {
         $extract = parent::current();
         return $this->fixPriority($extract);

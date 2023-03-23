@@ -153,7 +153,7 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
      *
      * @return mixed
      */
-    public function current()
+    public function current() : mixed
     {
         $priority = $this->top;
         $value = current($this->values[$this->priorities[$priority]]);
