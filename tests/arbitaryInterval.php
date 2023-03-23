@@ -13,7 +13,7 @@ $times = [
     '2023-02-10 06:19:59',
 ];
 
-$bucket = new \EdgeTelemetrics\TimeBucket\TimeBucket('5 minute');
+$bucket = new \EdgeTelemetrics\TimeBucket\TimeBucket('5 minutes');
 
 foreach ($times as $index => $time) {
     $time = new DateTimeImmutable($time);

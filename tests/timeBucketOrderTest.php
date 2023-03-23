@@ -19,9 +19,9 @@ use \EdgeTelemetrics\TimeBucket\TimeBucket;
 require '../vendor/autoload.php';
 
 class Measurement {
-    public $time;
-    public $value;
-    public $sensor_id;
+    public string $time;
+    public ?float $value;
+    public int $sensor_id;
 
     public function __construct($array)
     {
