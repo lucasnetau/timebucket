@@ -83,7 +83,6 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
     public function __construct(string $slice = 'second', $timezone = 'UTC')
     {
         if (preg_match('#(?P<quantity>\d+)\s+(?P<unit>minute)#', $slice, $matches)) {
-            print_r($matches);
             $this->sliceFormat = static::SLICE_FORMATS[$matches['unit']];
             $this->interval = (int)$matches['quantity'];
         } else {
