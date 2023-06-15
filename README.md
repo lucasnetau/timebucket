@@ -1,6 +1,8 @@
 # Time Bucket
 
-Not all events and measurements occur at the exact moment, however we may wish to correlate between these events by grouping them into arbitary time slices. TimeBucket allows you to group data into slices of time and then retrieve data via a time ordered queue.
+Not all events and measurements occur at the exact moment, however we may wish to correlate between these events by grouping them into arbitary time slices. TimeBucket allows you to aggregate data into slices of time (eg 5 minutes, by day etc) and then retrieve data via a time ordered queue.
+
+TimeBuckets can be used to estimate the interval between slices of data and identify any time slices that are missing data.
 
 ## Requirements
 
