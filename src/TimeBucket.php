@@ -110,9 +110,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
      */
     public function sliceCount() : int
     {
-        $iter = $this->getIterator(); //Perform this action on a copy of the queue to ensure we don't modify it
-        $iter->setExtractFlags(SplPriorityQueue::EXTR_PRIORITY);
-        return $iter->isEmpty() ? 0 : count(array_unique(iterator_to_array($iter)));
+        return $this->innerQueue->priorityCount();
     }
 
     /**
@@ -167,6 +165,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
      */
     public function getIterator() : TimeOrderedStorageInterface
     {
+        $this->innerQueue->beforeClone();
         return clone $this->innerQueue;
     }
 
@@ -416,6 +415,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
      */
     function __clone()
     {
+        $this->innerQueue->beforeClone();
         $this->innerQueue = clone $this->innerQueue;
     }
 }

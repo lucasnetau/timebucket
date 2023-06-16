@@ -78,9 +78,14 @@ echo count($data) . PHP_EOL;
 
 echo '**** Validate getTimeSlices()' . PHP_EOL;
 $totalDatapoints = 0;
+echo $prevTime = null;
 foreach($bucket->getTimeSlices() as ['time' => $time, 'data' => $data])
 {
     $totalDatapoints += count($data);
+    if ($prevTime !== null && $time < $prevTime) {
+        echo '***ERROR*** Time out of order. ' . PHP_EOL;
+    }
+    $prevTime = $time;
    // echo 'Slice ' . $time . " contains " . count($data) . " datapoints" . PHP_EOL;
 }
 echo 'Bucket contains ' . $totalDatapoints . " datapoints." . PHP_EOL;

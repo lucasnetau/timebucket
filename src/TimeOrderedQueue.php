@@ -12,6 +12,9 @@
 namespace EdgeTelemetrics\TimeBucket;
 
 use SplPriorityQueue;
+use function array_unique;
+use function count;
+use function iterator_to_array;
 
 class TimeOrderedQueue extends SplPriorityQueue implements TimeOrderedStorageInterface {
     /**
@@ -19,7 +22,7 @@ class TimeOrderedQueue extends SplPriorityQueue implements TimeOrderedStorageInt
      */
     protected int $serial = PHP_INT_MIN;
 
-    public function insert($value, $priority)
+    public function insert($value, $priority) : void
     {
         if (! is_array($priority)) {
             $priority = [$priority, $this->serial++];
@@ -55,15 +58,29 @@ class TimeOrderedQueue extends SplPriorityQueue implements TimeOrderedStorageInt
         return $this->fixPriority($extract);
     }
 
-    public function extract()
+    public function extract() : mixed
     {
         $extract = parent::extract();
         return $this->fixPriority($extract);
     }
 
-    public function top()
+    public function top() : mixed
     {
         $extract = parent::top();
         return $this->fixPriority($extract);
+    }
+
+    public function beforeClone() : void {
+        //NOOP
+    }
+
+    public function priorityCount(): int
+    {
+        if ($this->isEmpty()) {
+            return 0;
+        }
+        $iter = clone $this;
+        $iter->setExtractFlags(SplPriorityQueue::EXTR_PRIORITY);
+        return count(array_unique(iterator_to_array($iter)));
     }
 }

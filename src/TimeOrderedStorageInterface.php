@@ -19,14 +19,20 @@ use Iterator;
  * @package EdgeTelemetrics\TimeBucket
  */
 interface TimeOrderedStorageInterface extends Iterator, Countable {
-    public function insert($value, $priority);
-    /**
-     * @return int
-     */
-    public function count() : int;
+    public function insert($value, $priority) : void;
+
     public function current() : mixed;
     public function compare($priority1, $priority2) : int;
-    public function extract();
-    public function top();
-    public function isEmpty() : bool;
+    public function extract() : mixed;
+    public function top() : mixed;
+
+    /**
+     * @return bool
+     */
+    public function isEmpty();
+
+    public function priorityCount() : int;
+
+    /** Perform any tasks on parent object prior to clone being called */
+    public function beforeClone() : void;
 }

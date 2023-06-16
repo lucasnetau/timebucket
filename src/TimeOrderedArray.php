@@ -54,7 +54,7 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
      *
      * @var ?int|string
      */
-    protected $top = null;
+    protected string|int|null $top = null;
 
     /**
      * Total elements contained in the queue
@@ -94,7 +94,7 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
      * @param mixed $value    Element to insert
      * @param string|int   $priority Priority can be any key acceptable to a PHP array (so int|string)
      */
-    public function insert($value, $priority)
+    public function insert($value, $priority) : void
     {
         if (!array_key_exists($priority, $this->priorities))
         {
@@ -102,7 +102,7 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
             $newIndex = array_key_last($this->values);
             $this->priorities[$priority] = $newIndex;
             $this->prioritiesUnsorted = true;
-            if (null === $this->top || 1 == $this->compare($priority, $this->top)) {
+            if (null === $this->top || 1 === $this->compare($priority, $this->top)) {
                 $this->top = $priority;
             }
         }
@@ -115,7 +115,7 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
      *
      * @return mixed
      */
-    public function extract()
+    public function extract() : mixed
     {
         if (!$this->valid()) {
             return false;
@@ -130,12 +130,12 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
      *
      * @return mixed
      */
-    public function top()
+    public function top() : mixed
     {
         if ($this->isEmpty()) {
             return false;
         }
-        return$this->current();
+        return $this->current();
     }
 
     /**
@@ -235,7 +235,7 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
      * Set the extraction flag for the queue. Priority / Data / Both
      * @param int $flag
      */
-    public function setExtractFlags(int $flag)
+    public function setExtractFlags(int $flag): void
     {
         $this->mode = $flag;
     }
@@ -247,5 +247,17 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
     public function getExtractFlags() : int
     {
        return $this->mode;
+    }
+
+    public function beforeClone() : void {
+        if ($this->prioritiesUnsorted) {
+            uksort($this->priorities, array($this, 'compare'));
+            $this->prioritiesUnsorted = false;
+        }
+    }
+
+    public function priorityCount(): int
+    {
+        return count($this->priorities);
     }
 }
