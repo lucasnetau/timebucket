@@ -172,7 +172,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
 
     /**
      * Returns the timeslices in the bucket. Does not modify the timebucket
-     * @return Generator{time: string, data: array}|void
+     * @return Generator{time: string, data: array}
      */
     public function getTimeSlices(): Generator
     {
@@ -189,12 +189,12 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         {
             $item = $iter->extract();
             $itemPriority = $item['priority'];
-            if (null == $curPriority)
+            if (null === $curPriority)
             {
                 $curPriority = $itemPriority;
             }
 
-            if ($curPriority == $itemPriority)
+            if ($curPriority === $itemPriority)
             {
                 $items[] = $item['data'];
             }
@@ -226,11 +226,11 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         while (!$iter->isEmpty()) {
             $item = $iter->extract();
             $itemPriority = $item['priority'];
-            if (null == $curPriority) {
+            if (null === $curPriority) {
                 $curPriority = $itemPriority;
             }
 
-            if ($curPriority == $itemPriority) {
+            if ($curPriority === $itemPriority) {
                 $items[] = $item['data'];
             } else {
                 break;
@@ -267,12 +267,12 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         {
             $item = $iter->top();
             $itemPriority = $item['priority'];
-            if (null == $curPriority)
+            if (null === $curPriority)
             {
                 $curPriority = $itemPriority;
             }
 
-            if ($curPriority == $itemPriority)
+            if ($curPriority === $itemPriority)
             {
                 $item =  $iter->extract();
                 $items[] = $item['data'];
