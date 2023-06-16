@@ -18,6 +18,8 @@ use function array_key_exists;
 use function array_key_last;
 use function current;
 use function next;
+use function count;
+use function array_key_first;
 
 /**
  * Class TimeOrderedArray
@@ -100,8 +102,18 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
         {
             $this->values[] = [];
             $newIndex = array_key_last($this->values);
-            $this->priorities[$priority] = $newIndex;
-            $this->prioritiesUnsorted = true;
+            $orderedInsert = false;
+            if ($this->prioritiesUnsorted === false) {
+                $currentPriority = array_key_first($this->priorities);
+                if ($currentPriority === null || -1 === $this->compare($priority, $currentPriority)) {
+                    $this->priorities = [$priority => $newIndex] + $this->priorities;
+                    $orderedInsert = true;
+                }
+            }
+            if ($orderedInsert === false) {
+                $this->priorities[$priority] = $newIndex;
+                $this->prioritiesUnsorted = true;
+            }
             if (null === $this->top || 1 === $this->compare($priority, $this->top)) {
                 $this->top = $priority;
             }
