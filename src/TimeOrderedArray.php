@@ -13,13 +13,12 @@ namespace EdgeTelemetrics\TimeBucket;
 
 use SplPriorityQueue;
 
-use function uksort;
+use function krsort;
 use function array_key_exists;
 use function array_key_last;
 use function current;
 use function next;
 use function count;
-use function array_key_first;
 
 /**
  * Class TimeOrderedArray
@@ -52,7 +51,7 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
     protected bool $prioritiesUnsorted = false;
 
     /**
-     * Top priority contained in the queue
+     * Top priority contained in the queue (First out)
      *
      * @var ?int|string
      */
@@ -72,6 +71,8 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
      */
     protected int $index = 0;
 
+    protected int $priorityIndex = 0;
+
     /**
      * @var int Extraction mode - Same as SplPriorityQueue extraction mode
      */
@@ -85,9 +86,7 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
      */
     public function compare($priority1, $priority2) : int
     {
-        if ($priority1 === $priority2) return 0;
-
-        return $priority1 > $priority2 ? -1 : 1;
+        return $priority2 <=> $priority1;
     }
 
     /**
@@ -101,21 +100,18 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
         if (!array_key_exists($priority, $this->priorities))
         {
             $this->values[] = [];
-            $newIndex = array_key_last($this->values);
-            $orderedInsert = false;
-            if ($this->prioritiesUnsorted === false) {
-                $currentPriority = array_key_first($this->priorities);
-                if ($currentPriority === null || -1 === $this->compare($priority, $currentPriority)) {
-                    $this->priorities = [$priority => $newIndex] + $this->priorities;
-                    $orderedInsert = true;
-                }
-            }
-            if ($orderedInsert === false) {
+            $newIndex = $this->priorityIndex++;
+            if ($this->top === null) {
                 $this->priorities[$priority] = $newIndex;
-                $this->prioritiesUnsorted = true;
-            }
-            if (null === $this->top || 1 === $this->compare($priority, $this->top)) {
+                $this->prioritiesUnsorted = false;
                 $this->top = $priority;
+            } else {
+                $this->priorities[$priority] = $newIndex;
+                if ($priority < $this->top) {
+                    $this->top = $priority;
+                } else {
+                    $this->prioritiesUnsorted = true;
+                }
             }
         }
         $this->values[$this->priorities[$priority]][] = $value;
@@ -144,7 +140,7 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
      */
     public function top() : mixed
     {
-        if ($this->isEmpty()) {
+        if (null === $this->top) {
             return false;
         }
         return $this->current();
@@ -195,21 +191,23 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
      */
     public function next() : void
     {
-        if (false === next($this->values[$this->priorities[$this->top]])) {
-            unset($this->values[$this->priorities[$this->top]]);
-            unset($this->priorities[$this->top]);
+        $top = $this->top;
+        $priority = $this->priorities[$top];
+        if (false === next($this->values[$priority])) {
+            unset($this->values[$priority]);
+            unset($this->priorities[$top]);
             /** We delay sorting of priorities until we start reading them. */
             if ($this->prioritiesUnsorted)
             {
-                uksort($this->priorities, array($this, 'compare'));
+                krsort($this->priorities);
                 $this->prioritiesUnsorted = false;
             }
-            $this->top = empty($this->priorities) ? null : array_key_last($this->priorities);
-            /** Re-initialise the arrays to allow the GC to cleanup */
-            if (empty($this->priorities))
-            {
+            if (count($this->priorities) === 0) {
+                $this->top = null;
                 $this->priorities = [];
                 $this->values = [];
+            } else {
+                $this->top = array_key_last($this->priorities);
             }
         }
         ++$this->index;
@@ -258,18 +256,18 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
      */
     public function getExtractFlags() : int
     {
-       return $this->mode;
-    }
-
-    public function beforeClone() : void {
-        if ($this->prioritiesUnsorted) {
-            uksort($this->priorities, array($this, 'compare'));
-            $this->prioritiesUnsorted = false;
-        }
+        return $this->mode;
     }
 
     public function priorityCount(): int
     {
         return count($this->priorities);
+    }
+
+    public function peekSetCount() : int {
+        if (null === $this->top) {
+            return 0;
+        }
+        return count($this->values[$this->priorities[$this->top]]);
     }
 }

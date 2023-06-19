@@ -70,10 +70,6 @@ class TimeOrderedQueue extends SplPriorityQueue implements TimeOrderedStorageInt
         return $this->fixPriority($extract);
     }
 
-    public function beforeClone() : void {
-        //NOOP
-    }
-
     public function priorityCount(): int
     {
         if ($this->isEmpty()) {
@@ -82,5 +78,27 @@ class TimeOrderedQueue extends SplPriorityQueue implements TimeOrderedStorageInt
         $iter = clone $this;
         $iter->setExtractFlags(SplPriorityQueue::EXTR_PRIORITY);
         return count(array_unique(iterator_to_array($iter)));
+    }
+
+    public function peekSetCount() : int {
+        if ($this->isEmpty()) {
+            return 0;
+        }
+
+        $iter = clone $this;
+        $iter->setExtractFlags(SplPriorityQueue::EXTR_PRIORITY);
+
+        $curPriority = null;
+        $count = 0;
+        while (!$iter->isEmpty()) {
+            $itemPriority = $iter->extract();
+            if (null === $curPriority) {
+                $curPriority = $itemPriority;
+            } elseif ($curPriority !== $itemPriority) {
+                break;
+            }
+            ++$count;
+        }
+        return $count;
     }
 }

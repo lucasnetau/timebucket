@@ -32,6 +32,7 @@ use function preg_match;
 use function serialize;
 use function unserialize;
 use function is_int;
+use function round;
 
 class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSerializable {
 
@@ -165,7 +166,6 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
      */
     public function getIterator() : TimeOrderedStorageInterface
     {
-        $this->innerQueue->beforeClone();
         return clone $this->innerQueue;
     }
 
@@ -244,7 +244,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
      */
     public function nextTimeSliceCount(): int
     {
-        return $this->isEmpty() ? 0 : count($this->nextTimeSlice()['data']);
+        return $this->innerQueue->peekSetCount();
     }
 
     /**
@@ -415,7 +415,6 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
      */
     function __clone()
     {
-        $this->innerQueue->beforeClone();
         $this->innerQueue = clone $this->innerQueue;
     }
 }

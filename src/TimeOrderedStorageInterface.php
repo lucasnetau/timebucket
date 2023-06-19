@@ -31,8 +31,8 @@ interface TimeOrderedStorageInterface extends Iterator, Countable {
      */
     public function isEmpty();
 
+    /** Number of unique priorities */
     public function priorityCount() : int;
 
-    /** Perform any tasks on parent object prior to clone being called */
-    public function beforeClone() : void;
+    public function peekSetCount() : int;
 }

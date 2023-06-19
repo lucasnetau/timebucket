@@ -67,8 +67,10 @@ echo "Before Serialize - SliceCount: " . $bucket->sliceCount() . ", DataPoints: 
 $serialize = serialize($bucket);
 unset($bucket);
 $newBucket = unserialize($serialize);
+unset($serialize);
 echo "After Unserialize- SliceCount: " . $newBucket->sliceCount() . ", DataPoints: " . count($newBucket) . ", NextSliceCount: " . $newBucket->nextTimeSliceCount() . PHP_EOL;
 $bucket = $newBucket;
+unset($newBucket);
 
 //Validate next timeslice
 echo '**** Validate nextTimeSlice()' . PHP_EOL;
@@ -107,7 +109,14 @@ while (!$bucket->isEmpty()) {
    // echo 'value: ' . print_r($data, true) . PHP_EOL;
 }
 
+unset($time);
+unset($data);
+unset($bucket);
+
 echo "Memory after emptying TimeBucket : " . round(memory_get_usage(false) / 1024) . "KB" . PHP_EOL;
 
 $time_end = microtime(true);
 echo "Completed tests in " .  ($time_end - $time_start) . " seconds" . PHP_EOL;
+
+$cycles = \gc_collect_cycles() + \gc_collect_cycles();
+echo 'cycles: ' . $cycles . PHP_EOL;
