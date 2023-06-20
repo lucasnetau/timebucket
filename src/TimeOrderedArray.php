@@ -158,15 +158,12 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
     {
         $priority = $this->top;
         $value = current($this->values[$this->prioritiesIndex[$priority]]);
-        switch ($this->mode) {
-            case SplPriorityQueue::EXTR_BOTH :
-                return ['data' => $value, 'priority' => $priority];
-            case SplPriorityQueue::EXTR_PRIORITY :
-                return $priority;
-            case SplPriorityQueue::EXTR_DATA :
-                return $value;
-        }
-        return false;
+        return match ($this->mode) {
+            SplPriorityQueue::EXTR_BOTH => ['data' => $value, 'priority' => $priority],
+            SplPriorityQueue::EXTR_PRIORITY => $priority,
+            SplPriorityQueue::EXTR_DATA => $value,
+            default => false,
+        };
     }
 
     /**
