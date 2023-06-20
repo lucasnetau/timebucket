@@ -206,6 +206,7 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
                 $this->top = null;
                 $this->priorities = [];
                 $this->values = [];
+                $this->priorityIndex = 0;
             } else {
                 $this->top = array_key_last($this->priorities);
             }
