@@ -190,22 +190,22 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         {
             $item = $iter->extract();
             $itemPriority = $item['priority'];
-            if (null === $curPriority)
-            {
-                $curPriority = $itemPriority;
-            }
+            $curPriority ??= $itemPriority;
 
             if ($curPriority === $itemPriority)
             {
+                //Group same priority items together
                 $items[] = $item['data'];
             }
             else
             {
+                //Yield the previous time slice
                 yield ['time' => $curPriority, 'data' => $this->unique($items)];
                 $curPriority = $itemPriority;
                 $items = [$item['data']];
             }
         }
+        //Yield the final time slice
         yield ['time' => $curPriority, 'data' => $this->unique($items)];
     }
 
@@ -227,15 +227,13 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         while (!$iter->isEmpty()) {
             $item = $iter->extract();
             $itemPriority = $item['priority'];
-            if (null === $curPriority) {
-                $curPriority = $itemPriority;
-            }
+            $curPriority ??= $itemPriority;
 
-            if ($curPriority === $itemPriority) {
-                $items[] = $item['data'];
-            } else {
+            if ($curPriority !== $itemPriority) {
                 break;
             }
+
+            $items[] = $item['data'];
         }
         return ['time' => $curPriority, 'data' => $this->unique($items)];
     }
@@ -268,20 +266,14 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         {
             $item = $iter->top();
             $itemPriority = $item['priority'];
-            if (null === $curPriority)
-            {
-                $curPriority = $itemPriority;
-            }
+            $curPriority ??= $itemPriority;
 
-            if ($curPriority === $itemPriority)
-            {
-                $item =  $iter->extract();
-                $items[] = $item['data'];
-            }
-            else
-            {
+            if ($curPriority !== $itemPriority) {
                 break;
             }
+
+            $item =  $iter->extract();
+            $items[] = $item['data'];
         }
         return ['time' => $curPriority, 'data' => $this->unique($items)];
     }
@@ -358,6 +350,9 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         return $this->timezone;
     }
 
+    /**
+     * @codeCoverageIgnore
+     */
     public function jsonSerialize(): array
     {
         return [
@@ -370,6 +365,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
 
     /**
      * @return array
+     * @codeCoverageIgnore
      */
     public function __serialize(): array
     {
@@ -378,12 +374,18 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
 
     /**
      * @deprecated Legacy interface
+     * @codeCoverageIgnore
      */
     public function serialize(): ?string
     {
         return serialize($this->jsonSerialize());
     }
 
+    /**
+     * @param array $data
+     * @return void
+     * @codeCoverageIgnore
+     */
     public function __unserialize(array $data) {
         $this->__construct();
         $this->timezone = $data['timezone'] ?? new DateTimeZone('UTC');
@@ -404,6 +406,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
 
     /**
      * @deprecated Legacy interface
+     * @codeCoverageIgnore
      */
     public function unserialize($data)
     {
