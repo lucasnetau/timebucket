@@ -118,7 +118,7 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
      */
     public function extract() : mixed
     {
-        if (!$this->valid()) {
+        if (null === $this->top) { //!valid()
             return false;
         }
         $value = $this->current();
