@@ -76,7 +76,7 @@ unset($newBucket);
 echo '**** Validate nextTimeSlice()' . PHP_EOL;
 ['time' => $time, 'data' => $data] = $bucket->nextTimeSlice();
 echo $time . PHP_EOL;
-echo timeBucketOrderTest . phpcount($data) . PHP_EOL;
+echo count($data) . PHP_EOL;
 
 echo '**** Validate getTimeSlices()' . PHP_EOL;
 $totalDatapoints = 0;
@@ -97,7 +97,7 @@ echo '**** Validate extractTimeSlice()' . PHP_EOL;
 echo "Before Extract - SliceCount: " . $bucket->sliceCount() . ", DataPoints: " . count($bucket) . ", NextSliceCount: " . $bucket->nextTimeSliceCount() . PHP_EOL;
 ['time' => $time, 'data' => $data] = $bucket->extractTimeSlice();
 echo $time . PHP_EOL;
-echo timeBucketOrderTest . phpcount($data) . PHP_EOL;
+echo count($data) . PHP_EOL;
 echo "After Extract  - SliceCount: " . $bucket->sliceCount() . ", DataPoints: " . count($bucket) . ", NextSliceCount: " . $bucket->nextTimeSliceCount() . PHP_EOL;
 
 echo "Memory before emptying TimeBucket : " . round(memory_get_usage(false) / 1024) . "KB" . PHP_EOL;
