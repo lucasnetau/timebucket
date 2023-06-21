@@ -43,6 +43,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
 
     /**
      * Pre-defined formats to segment DateTime
+     * @ref https://www.php.net/manual/en/datetime.format.php
      */
     const SLICE_FORMATS = [
         "year" => "Y",
@@ -61,7 +62,8 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         "dayofweek" => "w",
         "hourofday" => "H",
         "monthofyear" => "m",
-        ];
+        "unixtime" => "U",
+    ];
 
     /**
      * @var string Date format to segment DateTime into slices
