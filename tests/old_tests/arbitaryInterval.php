@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-include __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 $times = [
     '2023-02-10 06:01:33',

@@ -16,7 +16,7 @@ ini_set('memory_limit', '2G');
 use \EdgeTelemetrics\TimeBucket\TimeBucket;
 
 // Load Composer
-require '../vendor/autoload.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 class Measurement {
     public string $time;

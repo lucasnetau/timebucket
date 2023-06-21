@@ -17,7 +17,7 @@ use \EdgeTelemetrics\TimeBucket\TimeBucket;
 use EdgeTelemetrics\TimeBucket\PeriodEstimator;
 
 // Load Composer
-require '../vendor/autoload.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 class Measurement {
     public string $time;

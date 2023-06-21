@@ -16,7 +16,7 @@ use \EdgeTelemetrics\TimeBucket\TimeOrderedArray;
 use \EdgeTelemetrics\TimeBucket\TimeOrderedQueue;
 
 // Load Composer
-require '../vendor/autoload.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 $spl = new TimeOrderedQueue();
 $spl->insert("test c", 3);
