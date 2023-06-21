@@ -22,7 +22,7 @@ interface TimeOrderedStorageInterface extends Iterator, Countable {
     public function insert($value, $priority) : void;
 
     public function current() : mixed;
-    public function compare($priority1, $priority2) : int;
+
     public function extract() : mixed;
     public function top() : mixed;
 

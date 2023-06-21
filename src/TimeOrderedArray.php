@@ -80,17 +80,6 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
     }
 
     /**
-     * Compare function for sorting of priorities. This provides a min Priority Queue
-     * @param $priority1
-     * @param $priority2
-     * @return int
-     */
-    public function compare($priority1, $priority2) : int
-    {
-        return $priority2 <=> $priority1;
-    }
-
-    /**
      * Insert a new element into the queue.
      *
      * @param mixed $value    Element to insert
