@@ -138,7 +138,7 @@ class TimeBucketTest extends TestCase
         $this->assertEquals(TimeBucket::SLICE_FORMATS['quarter'], $bucket->getTimeFormat());
     }
 
-    public function testMinuteIntervalsCanBeUser() {
+    public function testMinuteIntervalsCanBeUsed() {
         $bucket = new TimeBucket('5 minute');
 
         $time = new DateTimeImmutable('2023-01-01 12:31:00');
