@@ -81,9 +81,10 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
     /**
      * TimeBucket constructor.
      * @param string $slice The slice type for the bucket
-     * @param string|DateTimeZone $timezone Timezone for the bucket
+     * @param DateTimeZone|string $timezone Timezone for the bucket
+     * @throws Exception
      */
-    public function __construct(string $slice = 'second', $timezone = 'UTC')
+    public function __construct(string $slice = 'second', DateTimeZone|string $timezone = 'UTC')
     {
         if (preg_match('#(?P<quantity>\d+)\s+(?P<unit>minute)#', $slice, $matches)) {
             $this->sliceFormat = static::SLICE_FORMATS[$matches['unit']];
@@ -93,11 +94,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         }
         $this->innerQueue = new TimeOrderedArray();
         $this->innerQueue->setExtractFlags(SplPriorityQueue::EXTR_BOTH);
-        if ($timezone instanceof DateTimeZone) {
-            $this->timezone = $timezone;
-        } else {
-            $this->timezone = new DateTimeZone($timezone);
-        }
+        $this->timezone = $timezone instanceof DateTimeZone ? $timezone : new DateTimeZone($timezone);
     }
 
     /**
@@ -313,13 +310,12 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         $curPriority = null;
         while (!$iter->isEmpty()) {
             $priority = $iter->extract();
-            $itemPriority = DateTimeImmutable::createFromFormat($this->sliceFormat, $priority);
+            $itemPriority = DateTimeImmutable::createFromFormat($this->sliceFormat, $priority, $this->timezone);
             if (null === $curPriority) {
                 $curPriority = $itemPriority;
                 yield $itemPriority;
             } else {
-                $difference = (int)$itemPriority->format('U') - (int)$curPriority->format('U');
-                if ($difference > 0) {
+                if ($itemPriority > $curPriority) {
                     $curPriority = $itemPriority;
                     yield $itemPriority;
                 }
