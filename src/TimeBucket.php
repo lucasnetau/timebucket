@@ -137,14 +137,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
         }
         elseif($priority instanceof DateTimeInterface)
         {
-            if ($priority instanceof DateTime)
-            {
-                $time = DateTimeImmutable::createFromMutable($priority);
-            }
-            else
-            {
-                $time = $priority;
-            }
+            $time = ($priority instanceof DateTime) ? DateTimeImmutable::createFromMutable($priority) : $priority;
         }
         else
         {
