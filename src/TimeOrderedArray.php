@@ -11,6 +11,7 @@
 
 namespace EdgeTelemetrics\TimeBucket;
 
+use RuntimeException;
 use SplMinHeap;
 use SplPriorityQueue;
 
@@ -176,13 +177,13 @@ class TimeOrderedArray implements TimeOrderedStorageInterface {
             unset($this->values[$priority]);
             unset($this->prioritiesIndex[$top]);
             $this->priorityOrder->extract();
-            if (count($this->prioritiesIndex) === 0) {
+            try {
+                $this->top = $this->priorityOrder->top();
+            } catch (RuntimeException) {
                 $this->top = null;
                 $this->prioritiesIndex = [];
                 $this->values = [];
                 $this->priorityIndex = 0;
-            } else {
-                $this->top = $this->priorityOrder->top();
             }
         }
         ++$this->index;
