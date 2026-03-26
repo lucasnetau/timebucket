@@ -65,7 +65,7 @@ class PeriodEstimator
         sort($values, SORT_NUMERIC);
         $middle = floor(($count - 1) / 2);
 
-        if ($count = 1) {
+        if ($count == 1) {
             $median = $values[0];
         } elseif ($count % 2) {
             $median = $values[$middle];
