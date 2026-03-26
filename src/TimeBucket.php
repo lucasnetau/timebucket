@@ -32,7 +32,6 @@ use function preg_match;
 use function serialize;
 use function unserialize;
 use function is_int;
-use function round;
 
 class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSerializable {
 
@@ -73,6 +72,9 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
     /** @var int Interval to group time into slices */
     protected int $interval = 1;
 
+    /** @var string|null */
+    protected ?string $intervalUnit = null;
+
     /**
      * @var DateTimeZone Timezone for the bucket
      */
@@ -86,11 +88,19 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
      */
     public function __construct(string $slice = 'second', DateTimeZone|string $timezone = 'UTC')
     {
-        if (preg_match('#(?P<quantity>\d+)\s+(?P<unit>minute)#', $slice, $matches)) {
-            $this->sliceFormat = static::SLICE_FORMATS[$matches['unit']];
+        // Accept "N unit" syntax for minute, hour, day, week, month, year
+        if (preg_match('#^(?P<quantity>\d+)\s+(?P<unit>minute|hour|day|week|month|year)s?$#i', $slice, $matches)) {
+            $unit = strtolower($matches['unit']);
             $this->interval = (int)$matches['quantity'];
+            // Map unit to a slice format that represents the *base* granularity
+            $this->sliceFormat = static::SLICE_FORMATS[$unit] ?? static::SLICE_FORMATS['second'];
+            $this->intervalUnit = $unit;
         } else {
-            $this->sliceFormat = array_key_exists($slice, static::SLICE_FORMATS) ? static::SLICE_FORMATS[$slice] : static::SLICE_FORMATS['second'];
+            $this->sliceFormat = array_key_exists($slice, static::SLICE_FORMATS)
+                ? static::SLICE_FORMATS[$slice]
+                : static::SLICE_FORMATS['second'];
+            $this->interval = 1;
+            $this->intervalUnit = null;
         }
         $this->innerQueue = new TimeOrderedArray();
         $this->innerQueue->setExtractFlags(SplPriorityQueue::EXTR_BOTH);
@@ -125,29 +135,24 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
     /**
      * Insert data into the bucket
      * @param $datum
-     * @param int|string|DateTimeInterface $priority Time linked to the data, can be Unix timestamp (int), DateTime String (string) or DateTimeInterface
+     * @param DateTimeInterface|int|string $priority Time linked to the data, can be Unix timestamp (int), DateTime String (string) or DateTimeInterface
      * @throws Exception
      */
-    public function insert($datum, $priority)
+    public function insert($datum, DateTimeInterface|int|string $priority): void
     {
-        if (is_int($priority))
-        {
+        if (is_int($priority)) {
             /** Integer is processed as a UNIX timestamp */
             $time = DateTimeImmutable::createFromFormat('U', (string)$priority);
-        }
-        elseif($priority instanceof DateTimeInterface)
-        {
+        } elseif($priority instanceof DateTimeInterface) {
             $time = ($priority instanceof DateTime) ? DateTimeImmutable::createFromMutable($priority) : $priority;
-        }
-        else
-        {
+        } else {
             $time = new DateTimeImmutable($priority);
         }
 
         $time = $time->setTimezone($this->timezone);
-        if ($this->interval !== 1) {
-            //If we have an interval more than one slice we round the values into the slice
-            $time = $this->roundToNearestMinuteInterval($time, $this->interval);
+        if ($this->interval !== 1 && $this->intervalUnit !== null) {
+            /** Use generic rounding based on the detected unit */
+            $time = $this->roundToNearestInterval($time, $this->interval, $this->intervalUnit);
         }
         $priority = $time->format($this->sliceFormat);
         $this->innerQueue->insert($datum, $priority);
@@ -203,7 +208,7 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
      * Return the next timeslice in the bucket. Does not remove items from the bucket (ie peek)
      * @return array{time: string, data: array}|bool
      */
-    public function nextTimeSlice()
+    public function nextTimeSlice(): bool|array
     {
         if ($this->innerQueue->isEmpty()) {
             return false;
@@ -229,16 +234,26 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
     }
 
     /**
-     * Get the number of items in the next timeslice.
+     * Get the number of items in the current timeslice.
      * @return int
      */
-    public function nextTimeSliceCount(): int
+    public function currentTimeSliceCount(): int
     {
         return $this->innerQueue->peekSetCount();
     }
 
     /**
-     * Extract the next timeslice from the bucket. Pops the items from the bucket.
+     * @return int
+     * @deprecated "Use currentTimeSliceCount()"
+     */
+    public function nextTimeSliceCount(): int
+    {
+        return $this->currentTimeSliceCount();
+    }
+
+
+    /**
+     * Extract the current timeslice from the bucket. Pops the items from the bucket.
      * @return array{time: string, data: array}
      */
     public function extractTimeSlice(): array
@@ -317,19 +332,86 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
     }
 
     /**
-     * Round minutes to the nearest interval of a DateTime object.
+     * Round to the nearest interval of a DateTime object.
      *
      * @param DateTimeImmutable $dateTime
-     * @param int $minuteInterval
+     * @param int $interval
+     * @param string $unit
      * @return DateTimeImmutable
      */
-    public function roundToNearestMinuteInterval(DateTimeImmutable $dateTime, int $minuteInterval = 10) : DateTimeImmutable
+    public function roundToNearestInterval(DateTimeImmutable $dateTime, int $interval, string $unit): DateTimeImmutable
     {
-        return $dateTime->setTime(
-            (int)$dateTime->format('H'),
-            (int)round($dateTime->format('i') / $minuteInterval) * $minuteInterval,
-            0
-        );
+        switch ($unit) {
+            case 'minute':
+                // Floor the minutes, carry overflow into the hour if needed.
+                $minutes = (int)$dateTime->format('i');
+                $rounded = intdiv($minutes, $interval) * $interval;
+                $hourAdjustment = intdiv($rounded, 60);
+                $newMinute = $rounded % 60;
+                return $dateTime->setTime(
+                    (int)$dateTime->format('H') + $hourAdjustment,
+                    $newMinute,
+                    0
+                );
+
+            case 'hour':
+                // Floor the hours, carry overflow into the day.
+                $hours = (int)$dateTime->format('H');
+                $rounded = intdiv($hours, $interval) * $interval;
+                $dayAdjustment = intdiv($rounded, 24);
+                $newHour = $rounded % 24;
+                return $dateTime->setTime(
+                    $newHour,
+                    0,
+                    0
+                )->modify("+{$dayAdjustment} day");
+
+            case 'day':
+                // Days are 1‑based, so we subtract 1 before flooring.
+                $day = (int)$dateTime->format('d');
+                $rounded = intdiv($day - 1, $interval) * $interval + 1;
+                return $dateTime->setDate(
+                    (int)$dateTime->format('Y'),
+                    (int)$dateTime->format('m'),
+                    $rounded
+                )->setTime(0, 0, 0);
+
+            case 'week':
+                // ISO weeks are also 1‑based.
+                $isoWeek = (int)$dateTime->format('W');
+                $roundedWeek = intdiv($isoWeek - 1, $interval) * $interval + 1;
+
+                // Compute the Monday of the rounded ISO week.
+                $year = (int)$dateTime->format('o');
+                $date = new DateTimeImmutable();
+                $date = $date->setDate($year, 1, 4) // Jan-4 is always in ISO week-1
+                    ->modify('Monday this week')
+                    ->modify('+' . ($roundedWeek - 1) . ' weeks')
+                    ->setTime(0, 0, 0);
+                return $date->setTimezone($this->timezone);
+
+            case 'month':
+                // Months are 1‑based.
+                $month = (int)$dateTime->format('n');
+                $roundedMonth = intdiv($month - 1, $interval) * $interval + 1;
+                $yearAdjustment = intdiv($roundedMonth - 1, 12);
+                $newMonth = ($roundedMonth - 1) % 12 + 1;
+                return $dateTime->setDate(
+                    (int)$dateTime->format('Y') + $yearAdjustment,
+                    $newMonth,
+                    1
+                )->setTime(0, 0, 0);
+
+            case 'year':
+                // Years start at 0, so simple floor works.
+                $year = (int)$dateTime->format('Y');
+                $roundedYear = intdiv($year, $interval) * $interval;
+                return $dateTime->setDate($roundedYear, 1, 1)->setTime(0, 0, 0);
+
+            default:
+                // Should never happen – return the original DateTime.
+                return $dateTime;
+        }
     }
 
     /**
@@ -410,5 +492,24 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
     function __clone()
     {
         $this->innerQueue = clone $this->innerQueue;
+    }
+
+    function __debugInfo(): ?array
+    {
+        $clone = clone $this;
+        $data = [
+            'timezone' => $clone->timezone,
+            'format' => $clone->getTimeFormat(),
+            'sliceCount' => $clone->sliceCount(),
+            'slices' => [],
+        ];
+
+        while (!$clone->isEmpty()) {
+            ['time' => $timestamp, 'data' => $measurements] = $clone->extractTimeSlice();
+
+            $data['slices'][$timestamp] = $measurements;
+        }
+
+        return $data;
     }
 }
