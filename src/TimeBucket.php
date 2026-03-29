@@ -11,6 +11,7 @@
 
 namespace EdgeTelemetrics\TimeBucket;
 
+use DateInterval;
 use SplPriorityQueue;
 use Countable;
 use IteratorAggregate;
@@ -409,10 +410,105 @@ class TimeBucket implements Countable, IteratorAggregate, Serializable, JsonSeri
                 return $dateTime->setDate($roundedYear, 1, 1)->setTime(0, 0, 0);
 
             default:
-                // Should never happen – return the original DateTime.
+                // Not supported – return the original DateTime.
                 return $dateTime;
         }
     }
+
+    /**
+     * Convert a slice string back into a DateTimeImmutable, either at the start or end of the slice
+     *
+     * @param string $slice The slice value stored in the bucket.
+     * @param bool   $end   When true, return the last instant of the slice (microseconds = 999999).
+     * @return DateTimeImmutable
+     * @throws RuntimeException If the slice format cannot be expressed as a full calendar date/time.
+     */
+    public function sliceToDateTime(string $slice, bool $end = false): DateTimeImmutable
+    {
+        // Helper that always supplies the bucket's timezone and throws on failure.
+        $create = function (string $format, string $value): DateTimeImmutable {
+            $dt = DateTimeImmutable::createFromFormat($format, $value, $this->timezone);
+            if ($dt === false) {
+                throw new RuntimeException("Failed converting $value with $format");
+            }
+            return $dt;
+        };
+
+        /** Build the *start* of the slice (all fields zeroed, µs = 0) **/
+        $start = match ($this->sliceFormat) {
+            // Bi-directional datetime formats
+            static::SLICE_FORMATS['unixtime'],
+            static::SLICE_FORMATS['second'],
+            static::SLICE_FORMATS['secondtz'],
+            static::SLICE_FORMATS['minute'],
+            static::SLICE_FORMATS['minutetz'],
+            static::SLICE_FORMATS['hour'],
+            static::SLICE_FORMATS['hourtz'],
+                // Year only – prepend ! to zero month, day, time.
+            static::SLICE_FORMATS['year'],
+                // Month – day becomes 01, time zeroed.
+            static::SLICE_FORMATS['month'],
+                // Day / Date – time zeroed.
+            static::SLICE_FORMATS['date'],
+            static::SLICE_FORMATS['day'] => $create('!' . $this->sliceFormat, $slice),
+
+            // ISO week – Convert to Midnight on Monday of that ISO week.
+            static::SLICE_FORMATS['week'] => (function () use ($slice, $create) {
+                // $slice is “YYYY‑WW” (e.g. “2026‑03”)
+                [$year, $week] = explode('-', $slice);
+                // Create a DateTimeImmutable in the bucket’s timezone,
+                // then set the ISO year/week/day (day = 1 Monday).
+                return $create('!Y', $year)->setISODate((int)$year, (int)$week, 1);
+            })(),
+
+            // Quarter
+            static::SLICE_FORMATS['quarter'] => (function () use ($slice, $create) {
+                if (!preg_match('/^(?<year>\d{4})-Q(?<quarter>[1-4])$/', $slice, $m)) {
+                    throw new RuntimeException('Invalid quarter slice format');
+                }
+                $year    = (int)$m['year'];
+                $quarter = (int)$m['quarter'];
+                $month   = ($quarter - 1) * 3 + 1; // 1,4,7,10
+                return $create('!Y-m', "$year-$month");
+            })(),
+
+            // Any format that does *not* contain calendar fields we throw
+            default => throw new RuntimeException("Slice format '{$this->sliceFormat}' does not represent a full calendar date/time and cannot be converted.")
+        };
+
+        /**If $end === true, move to the very last micro‑second of the slice. **/
+        if ($end) {
+            // Choose the interval that corresponds to the slice granularity.
+            $interval = match ($this->sliceFormat) {
+                static::SLICE_FORMATS['unixtime'],
+                static::SLICE_FORMATS['second'],
+                static::SLICE_FORMATS['secondtz'] => new DateInterval('PT1S'),
+
+                static::SLICE_FORMATS['minute'],
+                static::SLICE_FORMATS['minutetz'] => new DateInterval('PT1M'),
+
+                static::SLICE_FORMATS['hour'],
+                static::SLICE_FORMATS['hourtz']   => new DateInterval('PT1H'),
+
+                static::SLICE_FORMATS['day'],
+                static::SLICE_FORMATS['date']     => new DateInterval('P1D'),
+
+                static::SLICE_FORMATS['week']     => new DateInterval('P1W'),
+
+                static::SLICE_FORMATS['month']    => new DateInterval('P1M'),
+
+                static::SLICE_FORMATS['year']     => new DateInterval('P1Y'),
+
+                static::SLICE_FORMATS['quarter']  => new DateInterval('P3M'),
+            };
+
+            // Add one whole slice, then step back a single micro‑second.
+            return $start->add($interval)->modify('-1 microsecond');
+        }
+
+        return $start;
+    }
+
 
     /**
      * @return DateTimeZone

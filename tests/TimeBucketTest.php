@@ -312,4 +312,31 @@ class TimeBucketTest extends TestCase
         $this->assertCount(1, $slices[1]['data']);
     }
 
+    public function testSliceToDateTime() : void
+    {
+        foreach(
+            [
+                ['slice' => 'year', 'input' => '2026', 'expect' => '2026-01-01T00:00:00+11:00'],
+                ['slice' => 'year', 'input' => '2026', 'expect' => '2026-12-31T23:59:59+11:00', 'end' => true],
+                ['slice' => 'month', 'input' => '2026-03', 'expect' => '2026-03-01T00:00:00+11:00'],
+                ['slice' => 'quarter', 'input' => '2026-Q4', 'expect' => '2026-10-01T00:00:00+11:00'],
+                ['slice' => 'week', 'input' => '2026-03', 'expect' => '2026-01-12T00:00:00+11:00'],
+                ['slice' => 'date', 'input' => '2026-04-01', 'expect' => '2026-04-01T00:00:00+11:00'],
+                ['slice' => 'day', 'input' => '2026-05-01', 'expect' => '2026-05-01T00:00:00+11:00'],
+                ['slice' => 'day', 'input' => '2026-05-01', 'expect' => '2026-05-01T23:59:59+11:00', 'end' => true],
+                ['slice' => 'hour', 'input' => '2026-04-01 10:00:00', 'expect' => '2026-04-01T10:00:00+11:00'],
+                ['slice' => 'hour', 'input' => '2026-04-01 10:00:00', 'expect' => '2026-04-01T10:59:59+11:00', 'end' => true],
+                ['slice' => 'hourtz', 'input' => '2026-04-01T10:00:00+11:00', 'expect' => '2026-04-01T10:00:00+11:00'],
+                ['slice' => 'minute', 'input' => '2026-05-01 11:21:00', 'expect' => '2026-05-01T11:21:00+11:00'],
+                ['slice' => 'minutetz', 'input' => '2026-05-01T11:21:00+11:00', 'expect' => '2026-05-01T11:21:00+11:00'],
+                ['slice' => 'second', 'input' => '2026-06-01 11:21:33', 'expect' => '2026-06-01T11:21:33+11:00'],
+                ['slice' => 'secondtz', 'input' => '2026-06-01T11:21:33+11:00', 'expect' => '2026-06-01T11:21:33+11:00'],
+            ] as $test) {
+            $bucket = new TimeBucket($test['slice'], '+11');
+          //  echo "Testing {$test['slice']}\n";
+            $this->assertEquals($test['expect'], $bucket->sliceToDateTime($test['input'], ($test['end'] ?? false))->format('c'), "Test failed for {$test['slice']}");
+        }
+        //@TODO Test throwable non-convertable formats
+    }
+
 }
