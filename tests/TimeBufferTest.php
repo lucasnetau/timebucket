@@ -7,6 +7,8 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 /**
  * @covers \EdgeTelemetrics\TimeBucket\TimeBuffer
+ * @covers \EdgeTelemetrics\TimeBucket\TimeBucket
+ * @covers \EdgeTelemetrics\TimeBucket\TimeOrderedArray
  */
 class TimeBufferTest extends TestCase
 {
